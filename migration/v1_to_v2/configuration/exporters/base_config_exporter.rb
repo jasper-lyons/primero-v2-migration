@@ -96,6 +96,6 @@ class BaseConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[Agency Report UserGroup PrimeroModule PrimeroProgram ContactInformation ExportConfiguration]
+    [Agency, Report, UserGroup, PrimeroModule, PrimeroProgram, ContactInformation, ExportConfiguration]
   end
 end

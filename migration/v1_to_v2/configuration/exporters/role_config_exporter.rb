@@ -309,6 +309,6 @@ class RoleConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[Role]
+    [Role]
   end
 end

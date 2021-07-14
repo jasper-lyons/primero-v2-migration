@@ -33,6 +33,6 @@ class LookupConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[Lookup]
+    [Lookup]
   end
 end

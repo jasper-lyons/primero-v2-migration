@@ -56,6 +56,6 @@ class SystemSettingsConfigExporter < ConfigurationExporter
   end
 
   def config_object_names
-    %w[SystemSettings]
+    [SystemSettings]
   end
 end

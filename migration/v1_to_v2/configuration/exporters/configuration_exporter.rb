@@ -1,19 +1,35 @@
 # frozen_string_literal: true
 
 require 'fileutils'
+require_relative '../../lib/ruby_serializer'
 
 # Exports the current v1.7 or v1.6 state of the Primero configuration as v2 compatible Ruby scripts.
 class ConfigurationExporter
+
+  class ConfigurationSerializer < RubySerializer
+    handler(CouchRest::Model::Base) do |klass, args: [], indent: 0|
+      hash = args.first
+      initializer_string = hash['unique_id'] ? 'create_or_update!' : 'create!'
+      arg_string = serialize(hash, indent: indent + 1)
+      "#{klass.name}.#{initializer_string}(#{arg_string})"
+    end
+
+    handler(ActiveSupport::HashWithIndifferentAccess) do |object, args: [], indent: 0|
+      serialize(object.symbolize_keys, indent: indent)
+    end
+  end
+
   def initialize(export_dir: 'seed-files', batch_size: 250)
     @export_dir = export_dir
     @batch_size = batch_size
     FileUtils.mkdir_p(@export_dir)
     @indent = 0
+    @serializer = ConfigurationSerializer.new
   end
 
   def export
     config_object_names.each do |config_name|
-      puts "Exporting #{config_name.pluralize}"
+      puts "Exporting #{config_name.to_s.pluralize}"
       export_config_objects(config_name, config_objects(config_name))
     end
   end
@@ -90,11 +106,11 @@ class ConfigurationExporter
     @forms_with_subforms
   end
 
-  def export_config_objects(config_name, objects)
-    file_name = file_for(config_name: config_name, config_objects: objects)
+  def export_config_objects(klass, objects)
+    file_name = file_for(config_name: klass.to_s, config_objects: objects)
     File.open(file_name, 'a') do |f|
       objects.each do |config_object|
-        f << config_to_ruby_string(config_name, config_object)
+        f << @serializer.instance(klass, args: [config_object])
       end
     end
   end
@@ -163,8 +179,8 @@ class ConfigurationExporter
     }
   end
 
-  def config_objects(config_name)
-    Object.const_get(config_name).all.map { |object| send("configuration_hash_#{config_name.underscore}", object) }
+  def config_objects(klass)
+    klass.all.map { |object| send("configuration_hash_#{klass.to_s.underscore}", object) }
   end
 
   def system_settings
